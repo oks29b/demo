@@ -1,24 +1,24 @@
 package com.example.demo.controller;
 
-import com.example.demo.domain.Role;
 import com.example.demo.domain.User;
-import com.example.demo.repos.UserRepo;
+import com.example.demo.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
-import java.util.Collections;
 import java.util.Map;
 
 @Controller
 public class RegistrationController {
 
-    private final UserRepo userRepo;
+    private final UserService userService;
 
     @Autowired
-    public RegistrationController(UserRepo userRepo) {
-        this.userRepo = userRepo;
+    public RegistrationController(UserService userService) {
+        this.userService = userService;
     }
 
     @GetMapping("/registration")
@@ -28,15 +28,25 @@ public class RegistrationController {
 
     @PostMapping("/registration")
     public String addUser(User user, Map<String, Object> model){
-        User userDb = userRepo.findByUsername(user.getUsername());
 
-        if(userDb != null){
+        if(!userService.addUser(user)){
             model.put("message", "User exists!");
             return "registration";
         }
-        user.setActive(true);
-        user.setRoles(Collections.singleton(Role.USER));
-        userRepo.save(user);
+
         return "redirect:/login";
+    }
+
+    @GetMapping("/activate/{code}")
+    public String activate(Model model, @PathVariable String code){
+        boolean isActivated = userService.activateUser(code);
+
+        if(isActivated){
+            model.addAttribute("message", "user successfully activated");
+        }else {
+            model.addAttribute("message", "activation code is note found");
+        }
+
+        return "login";
     }
 }

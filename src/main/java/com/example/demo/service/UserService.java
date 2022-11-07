@@ -4,6 +4,7 @@ import com.example.demo.domain.Role;
 import com.example.demo.domain.User;
 import com.example.demo.repos.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -31,7 +32,18 @@ public class UserService implements UserDetailsService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException, LockedException {
+        User user = userRepo.findByUsername(username);
+
+        if(user == null){
+            throw new UsernameNotFoundException("User not found");
+        }
+
+        if(user.getActivationCode() != null){
+            throw new LockedException("Email not activation"); // may be it's not need
+        }
+
+
         return userRepo.findByUsername(username);
     }
 
